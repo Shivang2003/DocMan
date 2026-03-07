@@ -1,0 +1,13 @@
+Location services are responsible for accurately identifying and tracking the user's position during emergencies.
+
+The system uses GPS data obtained from the user's mobile device. In cases where GPS signals are weak, the system may also use:
+
+Wi-Fi positioning
+
+Cellular tower triangulation
+
+The location service continuously updates the user's position and shares it with emergency responders.
+
+The service also calculates optimal routes for ambulances to reach the patient quickly.
+
+High location accuracy is essential for minimizing response time and ensuring successful emergency intervention.

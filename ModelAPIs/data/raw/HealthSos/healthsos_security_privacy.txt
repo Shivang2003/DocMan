@@ -1,0 +1,19 @@
+Security and privacy are fundamental principles of the HealthSOS platform.
+
+The system stores sensitive user information including medical records and location data. Therefore, strong security measures are implemented.
+
+These include:
+
+End-to-end encryption for emergency communications
+
+Secure authentication mechanisms
+
+Role-based access control
+
+Data anonymization for analytics
+
+Secure storage of medical information
+
+Only authorized medical responders are allowed to access user medical profiles during emergencies.
+
+All data access events are logged for auditing and compliance purposes.

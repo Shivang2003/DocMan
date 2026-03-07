@@ -1,0 +1,23 @@
+HealthSOS integrates with hospital databases to provide real-time information about nearby healthcare facilities.
+
+The hospital integration module stores data such as:
+
+Hospital name
+
+Location coordinates
+
+Available departments
+
+Emergency room capacity
+
+Ambulance availability
+
+Contact information
+
+When an emergency occurs, the system calculates the distance between the user and nearby hospitals using geolocation algorithms.
+
+Hospitals are ranked based on proximity and availability of emergency services.
+
+The platform may also send automated alerts to hospitals informing them of incoming emergency patients.
+
+This integration improves coordination between emergency responders and healthcare providers.

@@ -1,0 +1,17 @@
+Ambulance tracking is an essential component of the HealthSOS emergency response system.
+
+The platform tracks the availability and location of ambulances in real time. Ambulance providers can update their status through an integrated dashboard.
+
+The system performs the following tasks:
+
+Identifies the nearest available ambulance
+
+Sends dispatch notifications
+
+Tracks ambulance movement
+
+Updates estimated arrival time
+
+Users and their emergency contacts can view the live location of the ambulance responding to their request.
+
+This transparency reduces anxiety during emergencies and ensures efficient coordination between patients and responders.
