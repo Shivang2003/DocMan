@@ -1,6 +1,7 @@
 import os
 from pinecone import Pinecone, ServerlessSpec
 from sentence_transformers import SentenceTransformer
+from pipeline.indices_crud import createVectorInIndex, updateVectorInIndex, getVectorInIndex
 from dotenv import load_dotenv
 
 def ingest_documents(data_folder=None, index_name="test-docs-dataset", embed_model="all-MiniLM-L6-v2"):
@@ -11,8 +12,10 @@ def ingest_documents(data_folder=None, index_name="test-docs-dataset", embed_mod
 
     # respect arguments passed by the caller; fall back to sensible defaults
     INDEX_NAME = index_name or "test-docs-dataset"
+
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     # if user gave a relative path, interpret it from project root
+
     if data_folder:
         DATA_FOLDER = os.path.abspath(os.path.join(BASE_DIR, data_folder))
     else:
@@ -62,12 +65,15 @@ def ingest_documents(data_folder=None, index_name="test-docs-dataset", embed_mod
 
     # CREATE EMBEDDINGS
 
-
     embeddings = model.encode(documents)
 
     # PREPARE VECTORS
 
     vectors = []
+
+    if not getVectorInIndex(INDEX_NAME):
+        createVectorInIndex(id=INDEX_NAME, stored_ids=[], description="Index for document embeddings", directories=["None"], embed_model=EMBED_MODEL)
+        
 
     for i in range(len(documents)):
         vectors.append({
@@ -78,6 +84,7 @@ def ingest_documents(data_folder=None, index_name="test-docs-dataset", embed_mod
                 "directory": "None"
             }
         })
+        updateVectorInIndex(id=INDEX_NAME, field_updated="stored_ids", new_value=ids[i])
 
     # UPSERT INTO PINECONE
 
