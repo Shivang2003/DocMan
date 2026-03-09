@@ -1,9 +1,177 @@
-# directory.py
 import os
+import numpy as np
 from dotenv import load_dotenv
 from pinecone import Pinecone
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
+
+
+def cosine_score(vec1, vec2):
+    v1 = np.array(vec1, dtype=float)
+    v2 = np.array(vec2, dtype=float)
+
+    denom = np.linalg.norm(v1) * np.linalg.norm(v2)
+    if denom == 0:
+        return 0.0
+
+    return float(np.dot(v1, v2) / denom)
+
+
+def clean_name(file_id):
+    return file_id.replace(".txt", "").replace("/", "_")
+
+
+def get_all_ids_from_index(index, main_file):
+    """
+    IMPORTANT:
+    Pinecone does not provide a simple 'give me all ids' in fetch().
+    So for now, this method gets ids by querying around the main_file.
+
+    If you already store all ids somewhere else, replace this function.
+    """
+    main_fetch = index.fetch(ids=[main_file])
+
+    if main_file not in main_fetch.vectors:
+        raise ValueError(f"Main file '{main_file}' not found in index")
+
+    main_vector = main_fetch.vectors[main_file].values
+
+    # Get many nearby files
+    results = index.query(
+        vector=main_vector,
+        top_k=1000,
+        include_metadata=True
+    )
+
+    all_ids = []
+    for match in results.matches:
+        all_ids.append(match.id)
+
+    # ensure main_file is present
+    if main_file not in all_ids:
+        all_ids.insert(0, main_file)
+
+    return list(set(all_ids))
+
+
+def fetch_all_vectors(index, file_ids):
+    vectors = {}
+    result = index.fetch(ids=file_ids)
+
+    for fid in file_ids:
+        if fid in result.vectors:
+            vectors[fid] = result.vectors[fid].values
+
+    return vectors
+
+
+def get_score(fid1, fid2, vectors, sim_cache):
+    key = tuple(sorted([fid1, fid2]))
+    if key not in sim_cache:
+        sim_cache[key] = cosine_score(vectors[fid1], vectors[fid2])
+    return sim_cache[key]
+
+
+def build_cluster(seed_id, candidate_ids, vectors, sim_cache, threshold):
+    cluster = []
+
+    for fid in candidate_ids:
+        score = get_score(seed_id, fid, vectors, sim_cache)
+        if score >= threshold:
+            cluster.append(fid)
+
+    return cluster
+
+
+def find_best_subgroup(file_ids, vectors, sim_cache, sub_threshold):
+    """
+    Find a tighter subgroup inside a folder.
+    """
+    best_group = []
+    best_avg = -1
+
+    if len(file_ids) < 2:
+        return []
+
+    for seed in file_ids:
+        current_group = []
+
+        for fid in file_ids:
+            score = get_score(seed, fid, vectors, sim_cache)
+            if score >= sub_threshold:
+                current_group.append(fid)
+
+        if len(current_group) < 2:
+            continue
+
+        # average internal similarity
+        pair_scores = []
+        for i in range(len(current_group)):
+            for j in range(i + 1, len(current_group)):
+                pair_scores.append(
+                    get_score(current_group[i], current_group[j], vectors, sim_cache)
+                )
+
+        avg_score = sum(pair_scores) / len(pair_scores) if pair_scores else 1.0
+
+        if len(current_group) > len(best_group):
+            best_group = current_group
+            best_avg = avg_score
+        elif len(current_group) == len(best_group) and avg_score > best_avg:
+            best_group = current_group
+            best_avg = avg_score
+
+    return best_group
+
+
+def pick_central_file(group, vectors, sim_cache):
+    best_file = group[0]
+    best_avg = -1
+
+    for fid in group:
+        scores = []
+        for other in group:
+            if fid != other:
+                scores.append(get_score(fid, other, vectors, sim_cache))
+
+        avg_score = sum(scores) / len(scores) if scores else 0
+
+        if avg_score > best_avg:
+            best_avg = avg_score
+            best_file = fid
+
+    return best_file
+
+
+def build_subdirectories(parent_members, parent_path, vectors, sim_cache, paths, sub_threshold):
+    """
+    Create deeper folders only for tighter groups.
+    """
+    if len(parent_members) < 3:
+        return
+
+    subgroup = find_best_subgroup(parent_members, vectors, sim_cache, sub_threshold)
+
+    # no meaningful tighter subgroup
+    if len(subgroup) < 2 or len(subgroup) == len(parent_members):
+        return
+
+    subgroup_seed = pick_central_file(subgroup, vectors, sim_cache)
+    sub_path = f"{parent_path}/{clean_name(subgroup_seed)}"
+
+    print("Creating subdirectory:", sub_path)
+
+    for fid in subgroup:
+        paths[fid] = sub_path
+
+    # recurse deeper
+    build_subdirectories(
+        parent_members=subgroup,
+        parent_path=sub_path,
+        vectors=vectors,
+        sim_cache=sim_cache,
+        paths=paths,
+        sub_threshold=min(sub_threshold + 0.03, 0.95)
+    )
+
 
 def assign_directories(
     main_file="docker_docs_summary.txt",
@@ -13,87 +181,106 @@ def assign_directories(
     sub_threshold=0.85
 ):
     load_dotenv()
-    PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+    api_key = os.getenv("PINECONE_API_KEY")
 
-    # Connect to Pinecone
-    pc = Pinecone(api_key=PINECONE_API_KEY)
+    pc = Pinecone(api_key=api_key)
     index = pc.Index(index_name)
 
-    # Fetch main vector
-    main_fetch = index.fetch(ids=[main_file])
-    main_vector = main_fetch.vectors[main_file].values
+    # 1. get ids
+    all_ids = get_all_ids_from_index(index, main_file)
 
-    main_name = main_file.replace(".txt", "")
-    main_directory = f"{root_dir}/{main_name}"
+    # 2. fetch vectors once
+    vectors = fetch_all_vectors(index, all_ids)
 
-    # Initial cluster
-    results = index.query(vector=main_vector, top_k=100, include_metadata=True)
-    cluster, remaining = [], []
+    if main_file not in vectors:
+        raise ValueError(f"Main file '{main_file}' vector not found")
 
-    for match in results.matches:
-        if match.score >= threshold:
-            cluster.append(match.id)
-        else:
-            remaining.append(match.id)
+    sim_cache = {}
+    paths = {}
+    processed = set()
 
-    print("Creating directory:", main_directory)
-    for file_id in cluster:
-        index.update(id=file_id, set_metadata={"directory": main_directory})
+    # score everything against main file
+    main_scores = {}
+    for fid in vectors:
+        if fid != main_file:
+            main_scores[fid] = get_score(main_file, fid, vectors, sim_cache)
 
-    processed = set(cluster)
+    # -------------------------
+    # first top-level directory
+    # -------------------------
+    first_cluster = build_cluster(
+        seed_id=main_file,
+        candidate_ids=list(vectors.keys()),
+        vectors=vectors,
+        sim_cache=sim_cache,
+        threshold=threshold
+    )
 
-    # Subcluster function
-    def create_subclusters(file_ids, parent_dir):
-        if len(file_ids) <= 2:
-            return
-        vectors, ids = [], []
-        for fid in file_ids:
-            res = index.fetch(ids=[fid])
-            vec = res.vectors[fid].values
-            vectors.append(vec)
-            ids.append(fid)
-        vectors = np.array(vectors)
-        sim_matrix = cosine_similarity(vectors)
-        avg_scores = sim_matrix.mean(axis=1)
-        seed_index = np.argmax(avg_scores)
-        seed_file = ids[seed_index]
-        seed_vector = vectors[seed_index]
-        subcluster = []
-        for i, fid in enumerate(ids):
-            score = cosine_similarity([seed_vector], [vectors[i]])[0][0]
-            if score >= sub_threshold:
-                subcluster.append(fid)
-        if len(subcluster) == len(ids):
-            return
-        sub_dir = seed_file.replace(".txt", "")
-        sub_path = f"{parent_dir}/{sub_dir}"
-        print("Creating subdirectory:", sub_path)
-        for fid in subcluster:
-            index.update(id=fid, set_metadata={"directory": sub_path})
+    first_path = f"{root_dir}/{clean_name(main_file)}"
+    print("Creating directory:", first_path)
 
-    # Create subclusters
-    create_subclusters(cluster, main_directory)
+    for fid in first_cluster:
+        paths[fid] = first_path
 
-    # Process remaining files
-    while remaining:
-        seed = remaining.pop(0)
-        if seed in processed:
-            continue
-        seed_fetch = index.fetch(ids=[seed])
-        seed_vector = seed_fetch.vectors[seed].values
-        seed_name = seed.replace(".txt", "")
-        directory_name = f"{root_dir}/{seed_name}"
-        results = index.query(vector=seed_vector, top_k=100, include_metadata=True)
-        cluster = []
-        for match in results.matches:
-            if match.id in processed:
-                continue
-            if match.score >= threshold:
-                cluster.append(match.id)
-        print("\nCreating directory:", directory_name)
-        for file_id in cluster:
-            index.update(id=file_id, set_metadata={"directory": directory_name})
-            processed.add(file_id)
-        create_subclusters(cluster, directory_name)
+    build_subdirectories(
+        parent_members=first_cluster,
+        parent_path=first_path,
+        vectors=vectors,
+        sim_cache=sim_cache,
+        paths=paths,
+        sub_threshold=sub_threshold
+    )
 
-    return {"status": "success", "processed_files": len(processed)}
+    processed.update(first_cluster)
+
+    # -------------------------
+    # remaining top-level dirs
+    # -------------------------
+    while True:
+        remaining = [fid for fid in vectors.keys() if fid not in processed]
+        if not remaining:
+            break
+
+        # choose remaining file having max similarity with main_file
+        remaining.sort(key=lambda x: main_scores.get(x, -1), reverse=True)
+        next_seed = remaining[0]
+
+        next_cluster = build_cluster(
+            seed_id=next_seed,
+            candidate_ids=remaining,
+            vectors=vectors,
+            sim_cache=sim_cache,
+            threshold=threshold
+        )
+
+        next_path = f"{root_dir}/{clean_name(next_seed)}"
+        print("Creating directory:", next_path)
+
+        for fid in next_cluster:
+            paths[fid] = next_path
+
+        build_subdirectories(
+            parent_members=next_cluster,
+            parent_path=next_path,
+            vectors=vectors,
+            sim_cache=sim_cache,
+            paths=paths,
+            sub_threshold=sub_threshold
+        )
+
+        processed.update(next_cluster)
+
+    # -------------------------
+    # update metadata in index
+    # -------------------------
+    for fid, path in paths.items():
+        index.update(
+            id=fid,
+            set_metadata={"directory": path}
+        )
+
+    return {
+        "status": "success",
+        "processed_files": len(paths),
+        "directories_assigned": paths
+    }
