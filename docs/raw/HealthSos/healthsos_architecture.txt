@@ -1,0 +1,23 @@
+The HealthSOS platform follows a distributed system architecture designed for high availability and fast emergency response.
+
+The architecture consists of the following main components:
+
+Client Layer
+The client layer consists of mobile or web applications used by end users. These applications allow users to trigger SOS alerts, manage medical information, view nearby hospitals, and communicate with emergency responders.
+
+API Gateway
+All client requests are routed through an API gateway that handles authentication, request validation, and routing to backend services.
+
+Backend Services
+The backend system contains several microservices responsible for handling emergency requests, user profiles, hospital information, and location tracking.
+
+Location Service
+This service processes real-time GPS data and determines the exact location of the user. It also calculates distances between the user and nearby medical facilities.
+
+Notification Service
+This component is responsible for sending emergency notifications through multiple channels such as SMS, push notifications, and email alerts.
+
+Database Layer
+The database stores user profiles, emergency contact information, hospital databases, ambulance availability, and event logs.
+
+The architecture is designed to ensure that emergency alerts are processed in real time with minimal delay.

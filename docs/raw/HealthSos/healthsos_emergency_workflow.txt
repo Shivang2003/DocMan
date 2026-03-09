@@ -1,0 +1,32 @@
+The emergency workflow is the most critical component of the HealthSOS platform. It defines how the system responds when a user triggers an SOS alert.
+
+Step 1: SOS Trigger
+A user activates the emergency alert using the mobile application. This can be done through a panic button, voice command, or automatic accident detection.
+
+Step 2: Location Capture
+The system immediately retrieves the user's GPS location and verifies its accuracy.
+
+Step 3: Alert Generation
+An emergency alert is generated containing the following information:
+
+User identification
+
+Current location
+
+Medical profile summary
+
+Emergency contact list
+
+Step 4: Contact Notification
+The system notifies the user's emergency contacts with location information and the nature of the emergency.
+
+Step 5: Nearby Hospital Search
+The platform searches the hospital database to identify the closest medical facilities.
+
+Step 6: Ambulance Dispatch
+If ambulance services are available, the system sends dispatch requests to the nearest ambulance providers.
+
+Step 7: Continuous Tracking
+The user's location is continuously updated to assist responders in navigation.
+
+This workflow ensures that emergency assistance is coordinated as quickly as possible.

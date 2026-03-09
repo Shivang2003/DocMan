@@ -1,0 +1,25 @@
+User medical profiles are a critical feature of the HealthSOS system. These profiles allow emergency responders to access essential medical information during critical situations.
+
+Each user profile may contain the following details:
+
+Full name
+
+Age and gender
+
+Blood group
+
+Known allergies
+
+Existing medical conditions
+
+Current medications
+
+Emergency contact information
+
+Health insurance details
+
+When an SOS alert is triggered, a summarized version of the medical profile is included in the emergency notification sent to responders.
+
+This enables medical teams to quickly understand the patient's health risks and provide appropriate treatment.
+
+All user data is stored securely and access is restricted to authorized personnel during emergency situations.

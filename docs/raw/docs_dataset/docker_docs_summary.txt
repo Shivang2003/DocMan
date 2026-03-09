@@ -1,0 +1,195 @@
+===============================
+Docker Documentation
+===============================
+
+1. Introduction
+---------------
+Docker is an open-source platform that automates the deployment, scaling, and management of applications using containerization. 
+Containers are lightweight, portable, and consistent environments for running applications, isolating them from the underlying system.
+
+Key Concepts:
+- Container: A lightweight, standalone, executable package of software that includes everything needed to run it (code, runtime, system tools, libraries).
+- Image: A read-only template used to create containers.
+- Docker Engine: Core service to create and manage containers.
+- Dockerfile: A text file containing instructions to build a Docker image.
+- Docker Hub: Public registry for sharing Docker images.
+- Volume: Persistent storage for containers.
+
+2. Installation
+---------------
+- Docker Desktop (Windows/macOS)
+- Docker Engine (Linux)
+Installation steps:
+1. Download Docker Desktop from https://www.docker.com/products/docker-desktop
+2. Install and start Docker
+3. Verify installation:
+
+docker --version
+docker compose version
+
+
+3. Basic Docker Commands
+------------------------
+- `docker version` : Check Docker version.
+- `docker info` : Detailed system info.
+- `docker pull <image>` : Download an image from Docker Hub.
+- `docker images` : List all downloaded images.
+- `docker rmi <image>` : Remove an image.
+
+4. Working with Containers
+--------------------------
+- Create and run a container:
+
+docker run -it <image> /bin/bash
+
+- List running containers:
+
+docker ps
+
+- List all containers:
+
+docker ps -a
+
+- Stop a container:
+
+docker stop <container_id>
+
+- Remove a container:
+
+docker rm <container_id>
+
+- Access a running container:
+
+docker exec -it <container_id> /bin/bash
+
+
+5. Docker Images
+----------------
+- Build an image from Dockerfile:
+
+docker build -t <image_name>:<tag> .
+
+- List images:
+
+docker images
+
+- Remove an image:
+
+docker rmi <image_name>
+
+
+6. Dockerfile Structure
+-----------------------
+A Dockerfile is a script containing commands to assemble an image.
+Example:
+Base image
+
+FROM ubuntu:22.04
+
+Maintainer
+
+LABEL maintainer="example@example.com
+"
+
+Update packages
+
+RUN apt-get update && apt-get install -y python3 python3-pip
+
+Set working directory
+
+WORKDIR /app
+
+Copy project files
+
+COPY . /app
+
+Install dependencies
+
+RUN pip3 install -r requirements.txt
+
+Set entry point
+
+CMD ["python3", "app.py"]
+
+
+7. Docker Volumes
+-----------------
+- Volumes store persistent data independent of containers.
+- Create a volume:
+
+docker volume create my_volume
+
+- Attach a volume to a container:
+
+docker run -v my_volume:/data <image>
+
+- List volumes:
+
+docker volume ls
+
+
+8. Docker Networks
+------------------
+- Default bridge network: All containers communicate via bridge network by default.
+- Create a custom network:
+
+docker network create my_network
+
+- Connect container to network:
+
+docker run --network my_network <image>
+
+
+9. Docker Compose
+-----------------
+Docker Compose is used to define and manage multi-container applications.
+- Create `docker-compose.yml`:
+
+version: '3'
+services:
+web:
+image: nginx:latest
+ports:
+- "80:80"
+db:
+image: mysql:5.7
+environment:
+MYSQL_ROOT_PASSWORD: rootpassword
+
+- Commands:
+
+docker compose up # Start services
+docker compose down # Stop services
+docker compose ps # List running services
+docker compose logs # View logs
+
+
+10. Best Practices
+------------------
+- Keep images small.
+- Use multi-stage builds.
+- Avoid running containers as root.
+- Use `.dockerignore` to exclude unnecessary files.
+- Regularly clean unused images and containers:
+
+docker system prune
+
+
+11. Troubleshooting
+------------------
+- Container not starting:
+
+docker logs <container_id>
+
+- Port already in use: Change host port mapping.
+- Permissions issues: Ensure proper user mapping.
+
+12. References
+---------------
+- Official Docs: https://docs.docker.com/
+- Docker Hub: https://hub.docker.com/
+- Compose Docs: https://docs.docker.com/compose/
+
+===============================
+End of Docker Documentation
+===============================
