@@ -48,5 +48,3 @@ public class SupabaseStorageService {
         return supabaseUrl + "/storage/v1/object/public/" + bucketName + "/" + filePath;
     }
 }
-
-// send file FE / Create direcgtor  se ->  toh payload aayega jo hai abhi toh usme directory mentioned hogi indexname and projecgt name type se same hoga ya key pair ya phir is project ka ye porjecti ndex hai types toh fe se aaye toh wo saath me project index na
