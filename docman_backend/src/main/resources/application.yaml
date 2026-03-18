@@ -1,0 +1,11 @@
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+supabase:
+  url: https://riqrkjxlxtsjzihybptx.supabase.co
+  serviceKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpcXJranhseHRzanppaHlicHR4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzM2NTQ5NSwiZXhwIjoyMDg4OTQxNDk1fQ.1iAybTL2RvwzhztgfAaX2TDVmgre_NSPcOFOAgOGhfo
+  bucket: ProjectDocs
