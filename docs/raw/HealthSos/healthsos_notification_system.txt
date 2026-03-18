@@ -1,0 +1,25 @@
+The notification system ensures that emergency alerts are delivered quickly and reliably.
+
+Multiple communication channels are used to increase the chances of successful message delivery. These include:
+
+SMS alerts
+
+Mobile push notifications
+
+Email notifications
+
+In-app alerts
+
+Notifications contain important details such as:
+
+Emergency type
+
+User location
+
+Medical summary
+
+Contact information
+
+Redundant communication channels are used so that if one channel fails, others can still deliver the alert.
+
+The notification service is designed for high reliability and minimal latency.
